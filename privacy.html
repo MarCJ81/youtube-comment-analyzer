@@ -6,20 +6,37 @@
 <link rel="icon" href="favicon.svg" />
 <title>개인정보 처리 방침 — 댓글 레이더</title>
 <meta name="description" content="댓글 레이더는 서버 없이 브라우저에서만 동작하는 정적 앱으로, 수집하는 개인정보가 없습니다." />
+<meta name="theme-color" content="#FAFAFA" />
 <style>
-  :root { color-scheme: light dark; }
-  body { max-width: 720px; margin: 0 auto; padding: 40px 20px 80px; font: 15px/1.75 -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #171a1f; background: #fbfcfd; }
-  @media (prefers-color-scheme: dark) { body { color: #e9edf1; background: #0c0f13; } a { color: #7cc4ff; } }
-  h1 { font-size: 24px; letter-spacing: -.02em; }
-  h2 { font-size: 16px; margin-top: 28px; }
-  .muted { opacity: .7; font-size: 13px; }
-  a { color: #0f6fd1; }
-  ul { padding-left: 20px; }
+  @font-face { font-family: 'PlexKR'; src: url('assets/fonts/plexkr-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: 'PlexKR'; src: url('assets/fonts/plexkr-SemiBold.woff2') format('woff2'); font-weight: 500 600; font-display: swap; }
+  @font-face { font-family: 'PlexKR'; src: url('assets/fonts/plexkr-Bold.woff2') format('woff2'); font-weight: 700 900; font-display: swap; }
+  :root {
+    color-scheme: light dark;
+    --bg: #FAFAFA; --surface: #FFFFFF; --line: #E7E8EA;
+    --ink: #0C0D0F; --sub: #5B6067; --muted: #6B7076; --accent: #2F5BFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0A0B0D; --surface: #121317; --line: #26282E; --ink: #F4F5F7; --sub: #C9CDD4; --muted: #A2A8B2; --accent: #7D97FF; }
+  }
+  body {
+    max-width: 720px; margin: 0 auto; padding: 44px 20px 80px;
+    font: 15px/1.75 'PlexKR', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    letter-spacing: -.01em; color: var(--ink); background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 30px; font-weight: 800; letter-spacing: -.045em; margin: 0 0 6px; }
+  h2 { font-size: 15.5px; font-weight: 700; letter-spacing: -.02em; margin: 30px 0 6px; }
+  p { margin: 0 0 10px; color: var(--sub); }
+  .muted { color: var(--muted); font-size: 12.5px; }
+  a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  ul { padding-left: 20px; color: var(--sub); }
+  .back { display: inline-block; margin-top: 28px; font-weight: 600; }
 </style>
 </head>
 <body>
 <h1>개인정보 처리 방침</h1>
-<p class="muted">댓글 레이더 · 최종 갱신 2026-11-21</p>
+<p class="muted">댓글 레이더 · 최종 갱신 2026-11-22</p>
 
 <h2>1. 수집하는 개인정보</h2>
 <p>없습니다. 회원가입·로그인·결제가 없고 운영자 서버가 없습니다. 분석하려고 붙여넣거나 수집한 댓글은 이용자의 브라우저에만 있습니다.</p>
@@ -42,6 +59,6 @@
 <h2>7. 문의</h2>
 <p>이 앱은 정적 파일로 배포되며 운영자에게 개인정보가 전달되지 않습니다. 문의·오류 제보는 배포 페이지에 안내된 연락처나 배포 저장소의 이슈로 남겨 주세요.</p>
 
-<p><a href="./">← 앱으로 돌아가기</a></p>
+<a class="back" href="./">← 앱으로 돌아가기</a>
 </body>
 </html>

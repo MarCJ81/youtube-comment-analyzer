@@ -284,44 +284,53 @@
 
   /* ── covers ────────────────────────────────────────── */
   function demoCoverSVG(demoKey, title, hook, compact) {
-    const palette = {
-      kitchen: ['#e81f5a', '#ff9a3d'],
-      laptop: ['#7c5cff', '#2fb4d9'],
-      money: ['#0f9488', '#7cb342'],
+    /* A안 커버: 잉크 캔버스 + 코발트 한 색. 그라디언트로 색을 자랑하지 않는다. */
+    const ART = {
+      kitchen:
+        '<rect x="176" y="52" width="112" height="14" rx="7" fill="#2F5BFF"/>' +
+        '<rect x="176" y="78" width="76" height="14" rx="7" fill="#FFFFFF" fill-opacity=".42"/>' +
+        '<rect x="176" y="104" width="52" height="14" rx="7" fill="#FFFFFF" fill-opacity=".18"/>',
+      laptop:
+        '<rect x="176" y="48" width="112" height="68" rx="10" fill="#2F5BFF"/>' +
+        '<rect x="190" y="64" width="62" height="7" rx="3.5" fill="#FFFFFF" fill-opacity=".62"/>' +
+        '<rect x="190" y="79" width="42" height="7" rx="3.5" fill="#FFFFFF" fill-opacity=".34"/>' +
+        '<rect x="164" y="124" width="136" height="9" rx="4.5" fill="#FFFFFF" fill-opacity=".2"/>',
+      money:
+        '<rect x="184" y="106" width="20" height="30" rx="4" fill="#FFFFFF" fill-opacity=".26"/>' +
+        '<rect x="215" y="84" width="20" height="52" rx="4" fill="#FFFFFF" fill-opacity=".46"/>' +
+        '<rect x="246" y="56" width="20" height="80" rx="4" fill="#2F5BFF"/>' +
+        '<path d="M184 98l31-18 31-26" fill="none" stroke="#2F5BFF" stroke-opacity=".65" stroke-width="2" stroke-linecap="round"/>',
     };
-    const pair = palette[demoKey] || ['#e81f5a', '#ff7a3d'];
+    const FALLBACK_ART =
+      '<rect x="176" y="54" width="112" height="9" rx="4.5" fill="#2F5BFF"/>' +
+      '<rect x="176" y="74" width="86" height="9" rx="4.5" fill="#FFFFFF" fill-opacity=".38"/>' +
+      '<rect x="176" y="94" width="104" height="9" rx="4.5" fill="#FFFFFF" fill-opacity=".2"/>';
+    const key = String(demoKey || 'paste').replace(/[^a-zA-Z0-9_-]/g, '');
+    const gid = 'cg-' + key;
+    const head =
+      '<svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" role="img" aria-label="' + esc(title || '데모 커버') + '">' +
+      '<defs><radialGradient id="' + gid + '" cx="0.84" cy="0.06" r="0.92">' +
+      '<stop offset="0" stop-color="#2F5BFF" stop-opacity=".34"/><stop offset="1" stop-color="#2F5BFF" stop-opacity="0"/>' +
+      '</radialGradient></defs>' +
+      '<rect width="320" height="180" fill="#0C0D0F"/>' +
+      '<rect width="320" height="180" fill="url(#' + gid + ')"/>' +
+      '<rect x="16" y="16" width="52" height="20" rx="6" fill="#FFFFFF" fill-opacity=".1"/>' +
+      '<text x="42" y="30" text-anchor="middle" fill="#FFFFFF" fill-opacity=".82" font-size="9.5" font-weight="700" letter-spacing="1.2" font-family="PlexKR, sans-serif">DEMO</text>';
     if (compact) {
-      return '<svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" role="img" aria-label="' + esc(title) + '">' +
-        '<defs><linearGradient id="gc-' + esc(demoKey) + '" x1="0" y1="0" x2="1" y2="1">' +
-        '<stop offset="0" stop-color="' + pair[0] + '"/><stop offset="1" stop-color="' + pair[1] + '"/></linearGradient></defs>' +
-        '<rect width="320" height="180" fill="url(#gc-' + esc(demoKey) + ')"/>' +
-        '<circle cx="268" cy="140" r="92" fill="rgba(0,0,0,.13)"/>' +
-        '<path d="M96 52h128a15 15 0 0 1 15 15v60a15 15 0 0 1-15 15h-58l-34 26v-26h-36a15 15 0 0 1-15-15V67a15 15 0 0 1 15-15z" ' +
-        'fill="rgba(255,255,255,.22)" stroke="#fff" stroke-width="7" stroke-linejoin="round"/>' +
-        '<circle cx="132" cy="97" r="7" fill="#fff"/><circle cx="160" cy="97" r="7" fill="#fff"/><circle cx="188" cy="97" r="7" fill="#fff"/>' +
-        '<text x="52" y="34" fill="#fff" font-size="17" font-weight="700" letter-spacing="2" font-family="PlexKR, sans-serif">DEMO</text>' +
-      '</svg>';
+      return head + (ART[key] || FALLBACK_ART) + '</svg>';
     }
     const words = String(hook || title || '').split(' ');
     const lines = [];
     let line = '';
     words.forEach(w => {
-      if ((line + ' ' + w).trim().length > 12) { if (line) lines.push(line.trim()); line = w; }
+      if ((line + ' ' + w).trim().length > 9) { if (line) lines.push(line.trim()); line = w; }
       else line = (line + ' ' + w).trim();
     });
     if (line) lines.push(line.trim());
-    const text = lines.slice(0, 2).map((l, i) =>
-      '<text x="20" y="' + (50 + i * 22) + '" fill="#ffffff" font-size="15" font-weight="700" font-family="PlexKR, sans-serif">' +
+    const text = lines.slice(0, 3).map((l, i) =>
+      '<text x="18" y="' + (108 + i * 20) + '" fill="#FFFFFF" font-size="13.5" font-weight="700" font-family="PlexKR, sans-serif">' +
       esc(l) + '</text>').join('');
-    return '<svg viewBox="0 0 320 100" preserveAspectRatio="xMidYMid slice" role="img" aria-label="' + esc(title) + '">' +
-      '<defs><linearGradient id="g-' + esc(demoKey) + '" x1="0" y1="0" x2="1" y2="1">' +
-      '<stop offset="0" stop-color="' + pair[0] + '"/><stop offset="1" stop-color="' + pair[1] + '"/></linearGradient></defs>' +
-      '<rect width="320" height="100" fill="url(#g-' + esc(demoKey) + ')"/>' +
-      '<circle cx="286" cy="82" r="62" fill="rgba(0,0,0,.13)"/>' +
-      '<circle cx="308" cy="8" r="40" fill="rgba(255,255,255,.10)"/>' +
-      '<rect x="236" y="14" width="48" height="17" rx="8.5" fill="rgba(0,0,0,.3)"/>' +
-      '<text x="260" y="26" text-anchor="middle" fill="#fff" font-size="9" font-weight="700" letter-spacing="1" font-family="PlexKR, sans-serif">DEMO</text>' +
-      text + '</svg>';
+    return head + (ART[key] || FALLBACK_ART) + text + '</svg>';
   }
 
   /* ── render: tabs ──────────────────────────────────── */
