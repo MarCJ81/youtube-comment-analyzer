@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>댓글 레이더 — 유튜브 댓글 &amp; 고객반응 1초 분석기</title>
+<meta name="description" content="유튜브 영상·쇼츠 댓글을 모아 구매의향·질문·긍정·불만으로 자동 분류하고, 자주 나온 키워드·FAQ·다음 콘텐츠 소재·AI 분석 프롬프트까지 한 화면에서 뽑습니다. 서버 없이 브라우저에만 저장됩니다." />
+<meta name="theme-color" content="#ffffff" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<a class="skip-link" href="#main">본문으로 바로가기</a>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="#" data-action="go-dashboard" aria-label="댓글 레이더 홈">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40" width="34" height="34">
+          <defs>
+            <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ff7a3d" /><stop offset="1" stop-color="#e81f5a" />
+            </linearGradient>
+          </defs>
+          <rect x="1" y="1" width="38" height="38" rx="11" fill="url(#brandGrad)" />
+          <path d="M9 12.5h22a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5H18l-6 5v-5H9A2.5 2.5 0 0 1 6.5 25V15A2.5 2.5 0 0 1 9 12.5z" fill="#fff" fill-opacity=".18" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" />
+          <path d="M20 20a7 7 0 1 0-7 7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-opacity=".55" />
+          <path d="M20 20l5.5-5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" />
+          <circle cx="20" cy="20" r="2.1" fill="#fff" />
+        </svg>
+      </span>
+      <span class="brand-text">
+        <strong>댓글 레이더</strong>
+        <small>COMMENT RADAR</small>
+      </span>
+    </a>
+
+    <nav class="tabs" role="tablist" aria-label="주요 화면">
+      <button class="tab is-active" role="tab" aria-selected="true" data-tab="dashboard" id="tabDashboard">
+        반응 대시보드<span class="tab-count" id="tabCommentCount" hidden></span>
+      </button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="insights" id="tabInsights">기획 인사이트</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="studio" id="tabStudio">카피 스튜디오<span class="tab-dot" aria-hidden="true"></span></button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="collect" id="tabCollect">댓글 수집</button>
+    </nav>
+
+    <div class="top-actions">
+      <button type="button" class="icon-btn" data-action="toggle-theme" aria-label="다크 모드로 전환" title="라이트/다크">
+        <svg class="ico-sun" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M10 1.6v2M10 16.4v2M1.6 10h2M16.4 10h2M4.1 4.1l1.4 1.4M14.5 14.5l1.4 1.4M15.9 4.1l-1.4 1.4M5.5 14.5l-1.4 1.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <svg class="ico-moon" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M16.5 12.4A7 7 0 0 1 7.6 3.5a7 7 0 1 0 8.9 8.9z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" class="btn btn-ghost api-btn" data-action="open-settings" id="apiButton">
+        <span class="status-dot" id="apiDot" aria-hidden="true"></span>
+        <svg class="api-icon" viewBox="0 0 20 20" width="17" height="17" aria-hidden="true"><circle cx="6.8" cy="13.2" r="3.4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9.3 10.7l6.4-6.4M13.2 6.8l2.2 2.2M11.1 8.9l2.2 2.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span id="apiButtonLabel">API 키</span>
+      </button>
+      <button type="button" class="btn btn-primary" data-action="go-collect">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M10 3v9M6 8l4 4 4-4M4 16h12" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        댓글 수집
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+
+  <!-- ═══ 반응 대시보드 ═══════════════════════════════════ -->
+  <section class="view" id="view-dashboard" role="tabpanel" aria-label="반응 대시보드">
+
+    <div class="source-bar" id="sourceBar"></div>
+
+    <div class="kpi-grid" id="kpiGrid" aria-live="polite"></div>
+
+    <div class="split">
+      <div class="panel type-panel">
+        <div class="panel-head">
+          <h2>반응 유형 분포</h2>
+          <span class="muted" id="typeHint">4대 유형 자동 분류</span>
+        </div>
+        <div id="typeBars" class="type-bars"></div>
+        <p class="panel-note">구매의향·질문은 <b>다음 영상 · 고정 댓글</b>로, 불만은 <b>개선 소재</b>로 바로 이어집니다.</p>
+      </div>
+
+      <div class="panel keyword-panel">
+        <div class="panel-head">
+          <h2>자주 나오는 키워드 <em class="count-badge" id="kwBadge">TOP 15</em></h2>
+          <button class="link-btn" data-action="clear-keyword" id="clearKeyword" hidden>키워드 해제 ✕</button>
+        </div>
+        <div id="keywordChips" class="kw-chips"></div>
+        <p class="panel-note">칩을 누르면 그 키워드가 들어간 댓글만 남습니다.</p>
+      </div>
+    </div>
+
+    <section class="feed" aria-labelledby="feedTitle">
+      <div class="feed-head">
+        <div class="feed-title">
+          <h2 id="feedTitle">댓글 모음</h2>
+          <span class="muted" id="feedCount"></span>
+        </div>
+        <div class="feed-tools">
+          <label class="search" for="feedSearch">
+            <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12.8 12.8L17 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input id="feedSearch" type="search" placeholder="댓글 · 작성자 검색" autocomplete="off" spellcheck="false" />
+            <button type="button" class="search-clear" data-action="clear-search" aria-label="검색어 지우기" hidden>✕</button>
+          </label>
+          <label class="select-wrap">
+            <span class="sr-only">정렬</span>
+            <select id="sortSelect">
+              <option value="likes">좋아요순</option>
+              <option value="recent">최신순</option>
+              <option value="replies">답글수순</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="feed-filters" id="feedFilters" role="group" aria-label="댓글 필터"></div>
+
+      <div class="cmt-list" id="commentList" aria-live="polite"></div>
+      <div class="empty" id="feedEmpty" hidden>
+        <p><strong>조건에 맞는 댓글이 없습니다.</strong></p>
+        <p class="muted">필터나 검색어를 풀어 보세요.</p>
+        <button class="btn btn-ghost" data-action="reset-feed">필터 초기화</button>
+      </div>
+      <div class="feed-more" id="feedMore"></div>
+    </section>
+  </section>
+
+  <!-- ═══ 기획 인사이트 ═══════════════════════════════════ -->
+  <section class="view" id="view-insights" role="tabpanel" aria-label="기획 인사이트" hidden>
+    <div class="view-head">
+      <div class="view-title">
+        <h1>기획 인사이트</h1>
+        <p class="sub">댓글을 그대로 옮겨 적은 게 아니라, <b>다음에 만들 것</b>으로 바꿔 놓았습니다. 복사해서 바로 쓰세요.</p>
+      </div>
+      <div class="view-actions">
+        <button class="btn btn-ghost" data-action="copy-pinned">고정 댓글 복사</button>
+        <button class="btn btn-ghost" data-action="copy-prompt">AI 프롬프트 복사</button>
+        <button class="btn btn-primary" data-action="go-studio">카피 스튜디오에서 채점</button>
+      </div>
+    </div>
+
+    <div class="insight-grid">
+      <section class="panel faq-panel">
+        <div class="panel-head">
+          <h2>시청자가 가장 궁금해하는 3가지</h2>
+          <span class="muted" id="faqSource">질문·구매의향 댓글에서 추출</span>
+        </div>
+        <div id="faqList" class="faq-list"></div>
+      </section>
+
+      <section class="panel pinned-panel">
+        <div class="panel-head">
+          <h2>고정 댓글 추천 문구</h2>
+          <div class="panel-head-actions">
+            <span class="psych-badge" id="pinnedScore">—</span>
+            <button class="btn btn-sm btn-ghost" data-action="copy-pinned">복사</button>
+          </div>
+        </div>
+        <pre class="pinned-out" id="pinnedOut"></pre>
+        <div class="psych-row" id="pinnedPsych"></div>
+        <details class="fix-box" id="pinnedFixBox">
+          <summary>추상어·번역체 교정안 보기</summary>
+          <pre class="fix-out" id="pinnedFix"></pre>
+        </details>
+        <p class="panel-note">( ) 안은 크리에이터가 채우는 자리입니다. 점수는 광고 카피 기준이라 안내문인 고정 댓글은 낮게 나옵니다 — <b>빈틈 2개</b>를 보고 한 줄씩 보강하세요.</p>
+      </section>
+
+      <section class="panel ideas-panel">
+        <div class="panel-head">
+          <h2>다음 콘텐츠 소재 5개</h2>
+          <span class="muted" id="ideaAvg">불만 · 질문 · 구매의향에서</span>
+        </div>
+        <div id="ideaList" class="idea-list"></div>
+      </section>
+
+      <section class="panel prompt-panel">
+        <div class="panel-head">
+          <h2>AI 심층 분석 프롬프트</h2>
+          <button class="btn btn-sm btn-ghost" data-action="copy-prompt">전체 복사</button>
+        </div>
+        <p class="panel-note">댓글 핵심 50개를 좋아요순으로 정리해 넣었습니다. ChatGPT·Claude에 그대로 붙여 넣으면 됩니다.</p>
+        <pre class="prompt-out" id="promptOut"></pre>
+      </section>
+
+      <section class="panel export-panel">
+        <div class="panel-head"><h2>내보내기</h2></div>
+        <p class="panel-note">CSV는 UTF-8 BOM이라 엑셀에서 한글이 깨지지 않습니다. JSON은 다시 불러오거나 다른 도구에 넘길 때 씁니다.</p>
+        <div class="export-actions">
+          <button class="btn btn-ghost" data-action="export-csv">
+            <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><path d="M10 3v9M6 8l4 4 4-4M4 16h12" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+            CSV 다운로드
+          </button>
+          <button class="btn btn-ghost" data-action="export-json">JSON 다운로드</button>
+        </div>
+        <dl class="export-meta" id="exportMeta"></dl>
+      </section>
+    </div>
+  </section>
+
+  <!-- ═══ 카피 스튜디오 ═══════════════════════════════════ -->
+  <section class="view" id="view-studio" role="tabpanel" aria-label="카피 스튜디오" hidden>
+    <div class="view-head">
+      <div class="view-title">
+        <h1>카피 스튜디오</h1>
+        <p class="sub">댓글에서 뽑은 <b>질문·구매의향·불만</b>을 8대 심리 트리거로 채점하고, 지금 쓰는 <b>ChatGPT·Claude·Gemini 구독</b>으로 한 번에 보내 대본·반박 카드·고정 댓글을 받아옵니다. 추가 API 요금 없이.</p>
+      </div>
+      <div class="view-actions">
+        <button class="btn btn-ghost" data-action="go-insights">고정 댓글 보기</button>
+        <button class="btn btn-primary" data-action="studio-copy-prompt">프롬프트 복사</button>
+      </div>
+    </div>
+
+    <div class="score-strip" id="scoreStrip"></div>
+
+    <div class="studio-grid">
+      <section class="panel bundle-panel">
+        <div class="panel-head">
+          <h2>① 보낼 댓글 묶음</h2>
+          <div class="bundle-tools">
+            <span class="muted" id="bundleMeta"></span>
+            <label class="select-wrap">
+              <span class="sr-only">묶음 크기</span>
+              <select id="bundleSize">
+                <option value="4">간단 · 12개</option>
+                <option value="6" selected>표준 · 18개</option>
+                <option value="9">넉넉 · 27개</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="bundle-cols" id="bundleCols"></div>
+        <details class="bundle-kw">
+          <summary>키워드 · 질문 뼈대</summary>
+          <div class="kw-chips" id="bundleKeywords"></div>
+          <ul class="bundle-faq" id="bundleFaq"></ul>
+        </details>
+        <p class="panel-note">닉네임은 빼고 본문만 보냅니다. 좋아요순 상위만, 거의 같은 문장은 1개만 묶습니다.</p>
+      </section>
+
+      <section class="panel bridge-panel">
+        <div class="panel-head">
+          <h2>② 내 구독 AI로 보내기</h2>
+          <span class="muted" id="bridgeModeHint"></span>
+        </div>
+        <div class="seg mode-seg" id="modeSeg" role="group" aria-label="무엇을 받을지"></div>
+        <pre class="prompt-out studio-prompt" id="studioPrompt"></pre>
+        <div class="prompt-actions">
+          <button class="btn btn-primary btn-sm" data-action="studio-copy-prompt">프롬프트 복사</button>
+          <span class="muted" id="studioPromptMeta"></span>
+        </div>
+        <div class="bridge-btns" id="bridgeBtns"></div>
+        <p class="bridge-note" id="bridgeNote"></p>
+
+        <details class="gemini-box" id="geminiBox">
+          <summary>무료 Gemini API 키로 여기서 바로 받기 (선택)</summary>
+          <p class="form-note">키가 없어도 위 세 버튼으로 충분합니다. 키를 넣으면 새 창 없이 이 화면에서 결과를 받습니다. 키는 이 브라우저에만 저장되고, 주소창이 아니라 <b>요청 헤더</b>로 Google에만 전송됩니다.</p>
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label" for="geminiKey">Gemini API 키</label>
+              <input id="geminiKey" type="password" placeholder="AIza…" autocomplete="off" spellcheck="false" />
+            </div>
+            <div class="field">
+              <label class="field-label" for="geminiModel">모델</label>
+              <input id="geminiModel" type="text" list="geminiModels" placeholder="gemini-3.5-flash-lite" autocomplete="off" spellcheck="false" />
+              <datalist id="geminiModels"></datalist>
+            </div>
+          </div>
+          <div class="prompt-actions">
+            <button class="btn btn-primary btn-sm" data-action="gemini-generate" id="geminiBtn">Gemini로 받기</button>
+            <button class="btn btn-ghost btn-sm" data-action="save-gemini">키 저장</button>
+            <span class="muted" id="geminiStatus"></span>
+          </div>
+          <p class="form-note">무료 키: <code>aistudio.google.com/apikey</code> — 카드 등록 없이 발급. 무료 등급은 한도가 낮아 429가 나면 잠시 뒤 다시 시도하세요.</p>
+        </details>
+      </section>
+
+      <section class="panel result-panel">
+        <div class="panel-head">
+          <h2>③ 받은 결과 채점 · 적용</h2>
+          <span class="muted" id="resultHint">붙여넣으면 바로 채점합니다</span>
+        </div>
+        <textarea id="studioResult" rows="7" spellcheck="false"
+          placeholder="ChatGPT·Claude·Gemini가 준 답변을 통째로 붙여넣으세요.&#10;고정 댓글 모드에서는 A/B/C안을 자동으로 나눠 채점합니다."></textarea>
+        <div class="result-meta" id="resultMeta"></div>
+        <p class="panel-note result-note" id="resultNote" hidden>등급은 <b>광고 카피 기준</b>입니다. 고정 댓글은 안내문이라 낮게 나오는 게 정상이니, 점수보다 <b>빈틈 칩</b>을 보고 한 줄씩 보강하세요.</p>
+        <div class="result-cards" id="resultCards"></div>
+        <div class="prompt-actions">
+          <button class="btn btn-ghost btn-sm" data-action="result-clear">비우기</button>
+          <span class="muted">적용하면 기획 인사이트의 고정 댓글이 바뀝니다. 토스트에서 바로 되돌릴 수 있어요.</span>
+        </div>
+      </section>
+
+      <section class="panel fw-panel">
+        <div class="panel-head">
+          <h2>④ 프레임워크 4종으로 다시 쓰기</h2>
+          <span class="muted" id="fwBest"></span>
+        </div>
+        <div class="fw-inputs">
+          <label class="mini-field"><span>문제 (댓글에서)</span>
+            <input id="fwProblem" type="text" autocomplete="off" placeholder="가장 큰 불만 한 줄" /></label>
+          <label class="mini-field"><span>해결 · 약속</span>
+            <input id="fwSolution" type="text" autocomplete="off" placeholder="영상이 실제로 답한 것" /></label>
+          <label class="mini-field"><span>근거 (숫자)</span>
+            <input id="fwProof" type="text" autocomplete="off" placeholder="댓글 52개 · 질문 16건" /></label>
+          <button class="btn btn-ghost btn-sm" data-action="fw-autofill">댓글에서 자동 채우기</button>
+        </div>
+        <div class="seg fw-seg" id="fwSeg" role="group" aria-label="프레임워크"></div>
+        <div class="fw-out" id="fwOut"></div>
+        <p class="panel-note">문장 뼈대는 엔진이 만들고, 점수는 완성된 카피를 엔진이 다시 채점한 값입니다. 값이 비면 <b>[확인 필요]</b>로 남기고 지어내지 않습니다. <b>해결·근거</b>는 댓글에서 나오지 않으니, 영상에서 실제로 답한 값으로 고쳐 쓰세요.</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ═══ 댓글 수집 ═══════════════════════════════════════ -->
+  <section class="view" id="view-collect" role="tabpanel" aria-label="댓글 수집" hidden>
+    <div class="view-head">
+      <div class="view-title">
+        <h1>댓글 수집</h1>
+        <p class="sub">유튜브 링크를 넣으면 실제 댓글을 가져옵니다. 키가 없으면 데모 3종이나 붙여넣기로 바로 시작하세요.</p>
+      </div>
+    </div>
+
+    <div class="collect-tabs" id="collectTabs" role="tablist" aria-label="수집 방법">
+      <button class="ctab is-active" role="tab" aria-selected="true" data-mode="live">유튜브 실시간</button>
+      <button class="ctab" role="tab" aria-selected="false" data-mode="demo">데모 3종</button>
+      <button class="ctab" role="tab" aria-selected="false" data-mode="paste">붙여넣기</button>
+    </div>
+
+    <!-- 실시간 -->
+    <div class="collect-panel" id="panel-live">
+      <div class="collect-card">
+        <label class="field">
+          <span class="field-label">영상 · 쇼츠 링크 또는 11자리 ID</span>
+          <input id="videoInput" type="text" inputmode="url" autocomplete="off" spellcheck="false"
+                 placeholder="https://www.youtube.com/watch?v=… / https://youtu.be/… / https://www.youtube.com/shorts/…" />
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field-label">가져올 댓글 수</span>
+            <select id="maxSelect">
+              <option value="100" selected>100개 (호출 2회)</option>
+              <option value="200">200개 (호출 3회)</option>
+              <option value="300">300개 (호출 4회)</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="field-label">정렬</span>
+            <select id="orderSelect">
+              <option value="relevance" selected>관련도순 (유튜브 기본)</option>
+              <option value="time">최신순</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint" id="keyHint"></p>
+        <div class="collect-actions">
+          <button class="btn btn-primary" data-action="collect-live" id="collectLiveBtn">댓글 수집</button>
+          <button class="btn btn-ghost" data-action="open-settings">API 키 설정</button>
+          <span class="collect-status" id="collectStatus" role="status"></span>
+        </div>
+        <div class="error-box" id="collectError" hidden></div>
+      </div>
+
+      <aside class="collect-aside">
+        <h3>API 키 발급 (5분)</h3>
+        <ol class="steps">
+          <li>console.cloud.google.com → 프로젝트 만들기</li>
+          <li>API 및 서비스 → 라이브러리 → <b>YouTube Data API v3</b> 사용 설정</li>
+          <li>사용자 인증 정보 → <b>API 키</b> 만들기</li>
+          <li>이 앱의 <b>API 키</b> 버튼에 붙여넣기 (이 브라우저에만 저장)</li>
+        </ol>
+        <p class="hint">하루 무료 할당량은 10,000 units입니다. 영상 정보 1회(1 unit) + 댓글 100개당 1회(1 unit)라 300개를 모아도 4 units입니다. 댓글 10,000개를 모아도 하루 안에 충분합니다.</p>
+      </aside>
+    </div>
+
+    <!-- 데모 -->
+    <div class="collect-panel" id="panel-demo" hidden>
+      <div class="demo-grid" id="demoGrid"></div>
+      <p class="hint">데모 댓글은 실제 시청자 데이터가 아니라, 분류·키워드·FAQ가 어떻게 뽑히는지 보여주려고 만든 예시입니다.</p>
+    </div>
+
+    <!-- 붙여넣기 -->
+    <div class="collect-panel" id="panel-paste" hidden>
+      <div class="collect-card">
+        <label class="field">
+          <span class="field-label">댓글 붙여넣기 — 한 줄에 댓글 하나, 또는 CSV</span>
+          <textarea id="pasteInput" rows="10" spellcheck="false"
+            placeholder="영상 좋네요 어디서 사나요?&#10;42 | 가격이 비싼 편인데 재입고 되나요?&#10;&#10;CSV는 첫 줄에 헤더를 넣으세요: 댓글,좋아요,작성자"></textarea>
+        </label>
+        <div class="paste-row">
+          <button class="btn btn-ghost" data-action="fill-sample-paste">샘플 채우기</button>
+          <span class="hint" id="pasteDetect"></span>
+        </div>
+        <div class="collect-actions">
+          <button class="btn btn-primary" data-action="collect-paste">분석하기</button>
+          <span class="hint">형식 자동 판별: 헤더가 있으면 CSV, 없으면 줄 단위 댓글로 읽습니다. <code>좋아요 | 댓글</code> 형식도 인식합니다.</span>
+        </div>
+        <div class="error-box" id="pasteError" hidden></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <p><strong>댓글 레이더</strong> · 서버 없음 · 외부 트래커 0건 · 수집한 댓글과 설정은 이 브라우저(localStorage)에만 남습니다.</p>
+    <p class="muted">YouTube API 키는 이 브라우저 밖으로 나가지 않습니다. 데모 댓글은 예시 데이터이며 실제 인물과 무관합니다.</p>
+    <p class="muted"><a href="privacy.html">개인정보 처리방침</a></p>
+  </div>
+</footer>
+
+<div class="modal-root" id="modalRoot" hidden></div>
+<div class="toast-root" id="toastRoot" aria-live="polite" aria-atomic="true"></div>
+
+<script src="engines/copy-psych-engine.js"></script>
+<script src="engines/radar-copy.js"></script>
+<script src="engines/ai-bridge.js"></script>
+<script src="core.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
