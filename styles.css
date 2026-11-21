@@ -419,7 +419,7 @@ main { flex: 1 1 auto; width: 100%; max-width: var(--maxw); margin: 0 auto; padd
 /* ── 두 칸 패널 ──────────────────────────────────────── */
 .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 12px; margin-bottom: 12px; }
 .split > .panel { display: flex; flex-direction: column; }
-.split > .panel > .panel-note { margin-top: auto; padding-top: 14px; }
+.split > .panel > .panel-note { margin-top: auto; padding-top: 16px; }
 .type-bars { display: flex; flex-direction: column; gap: 11px; }
 .type-row { display: grid; grid-template-columns: 92px 1fr 74px; align-items: center; gap: 10px; }
 .type-name { font-size: 12px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
