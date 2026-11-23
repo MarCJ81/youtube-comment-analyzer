@@ -3,7 +3,7 @@
    ----------------------------------------------------------------------------
    앱에 <script src="engines/free-ai.js"></script> 한 줄, 시작 시 한 번
        FreeAI.configure({ app: 'ai-writer-studio' });
-   로 끝난다. 무료 체험 서버(Cloudflare Worker)는 https://free-ai-taste.goodday810202.workers.dev
+   로 끝난다. 무료 체험 서버(Cloudflare Worker)는 https://free-ai-taste.onetap-ai.workers.dev
    하나를 쓰고, 앱별로 주소를 따로 넣지 않는다.
 
    결과 모양은 Pro 커넥터와 같다(그래서 화면 코드가 하나다).
@@ -23,7 +23,7 @@
   'use strict';
 
   var VERSION = '1.1.0';
-  var ENDPOINT = 'https://free-ai-taste.goodday810202.workers.dev';
+  var ENDPOINT = 'https://free-ai-taste.onetap-ai.workers.dev';
   var VISITOR_KEY = 'freeai.visitor.v1';
   var MAX_PROMPT = 2000;
   var MAX_TOKENS_CAP = 900;
