@@ -209,13 +209,15 @@
     const classified = C.classifyAll(comments);
     const stats = C.computeStats(classified);
     const keywords = C.topKeywords(classified, 15);
+    const phrases = C.extractPhrases(classified, { limit: 10, minCount: 2 });
+    const clusters = C.clusterTopics(classified, keywords, { limit: 4, threshold: 0.22 });
     const faq = C.buildFaq(classified, 3);
     const ideas = C.buildContentIdeas(classified, stats);
     const pinned = C.buildPinnedComment(state.video, stats, faq);
     const prompt = C.buildPrompt(state.video, classified, stats, faq, { maxComments: 50 });
     const pinnedScore = RC ? RC.scorePinned(pinned) : null;
     const ideaScores = RC ? ideas.map(idea => RC.scoreIdea(idea)) : [];
-    return { comments: classified, stats, keywords, faq, ideas, pinned, prompt, pinnedScore, ideaScores };
+    return { comments: classified, stats, keywords, phrases, clusters, faq, ideas, pinned, prompt, pinnedScore, ideaScores };
   }
 
   function applyDataset(input, opts) {
@@ -226,6 +228,8 @@
     state.comments = built.comments;
     state.stats = built.stats;
     state.keywords = built.keywords;
+    state.phrases = built.phrases || [];
+    state.clusters = built.clusters || [];
     state.faq = built.faq;
     state.ideas = built.ideas;
     state.pinned = built.pinned;
@@ -475,6 +479,44 @@
     if (badge) badge.textContent = 'TOP ' + state.keywords.length;
   }
 
+  const TYPE_LABEL = { purchase: '구매의향', question: '질문', positive: '긍정', negative: '불만' };
+
+  /* 주제 묶음 — 같은 댓글에서 함께 나오는 단어 묶음 */
+  function renderClusters() {
+    const box = $('#clusterList');
+    const chips = $('#phraseChips');
+    const badge = $('#clusterBadge');
+    if (!box) return;
+    const clusters = state.clusters || [];
+    if (!clusters.length) {
+      box.innerHTML = '<p class="muted" style="font-size:12px">댓글이 더 모이면 주제가 묶입니다.</p>';
+    } else {
+      box.innerHTML = clusters.map(c => {
+        const total = c.types.purchase + c.types.question + c.types.positive + c.types.negative || 1;
+        const bar = ['purchase', 'question', 'positive', 'negative'].map(t => {
+          const w = Math.round((c.types[t] / total) * 100);
+          return w > 0 ? '<i data-t="' + t + '" style="width:' + w + '%" title="' + TYPE_LABEL[t] + ' ' + c.types[t] + '"></i>' : '';
+        }).join('');
+        const words = (c.words || []).slice(0, 6).map(w => '<span>' + esc(w) + '</span>').join('');
+        return '<button type="button" class="cluster-card" data-cluster="' + esc(c.label) + '" aria-label="' + esc(c.label) + ' 댓글만 보기">' +
+          '<div class="cluster-top"><b>' + esc(c.label) + '</b><span class="share">댓글 ' + c.count + ' · ' + c.share + '%</span></div>' +
+          '<div class="cluster-words">' + words + '</div>' +
+          '<div class="cluster-mix">' + bar + '</div>' +
+          '<div class="cluster-legend"><span>구매 ' + c.types.purchase + '</span><span>질문 ' + c.types.question +
+          '</span><span>긍정 ' + c.types.positive + '</span><span>불만 ' + c.types.negative + '</span></div>' +
+          '</button>';
+      }).join('');
+    }
+    if (badge) badge.textContent = 'TOP ' + clusters.length;
+    if (chips) {
+      const phrases = state.phrases || [];
+      chips.innerHTML = phrases.map(p =>
+        '<button type="button" data-phrase="' + esc(p.phrase) + '" title="' + esc(p.phrase + ' · 댓글 ' + p.count + '개') + '">' +
+        esc(p.phrase) + '<span class="n">' + p.count + '</span></button>'
+      ).join('');
+    }
+  }
+
   /* ── render: feed ──────────────────────────────────── */
   const FILTERS = [
     { key: 'all', label: '전체' },
@@ -681,6 +723,81 @@
     state.settings.geminiKey = key || '';
     if (key) writeLS(LS.geminiKey, JSON.stringify(key));
     else removeLS(LS.geminiKey);
+  }
+
+  /* ── 무료 AI 맛보기 (free-ai.js) ──────────────────────── */
+  const FREE = window.FreeAI || null;
+
+  function freeDigest() {
+    const s = state.stats || {};
+    const lines = [];
+    const title = (state.video && state.video.title) || '제목 없음';
+    lines.push('[영상] ' + title);
+    lines.push('[규모] 댓글 ' + (s.total || state.comments.length) + '개 · 좋아요 ' + Math.round(s.totalLikes || 0) +
+      ' · 구매의향 ' + ((s.counts && s.counts.purchase) || 0) + ' · 질문 ' + ((s.counts && s.counts.question) || 0) +
+      ' · 긍정 ' + ((s.counts && s.counts.positive) || 0) + ' · 불만 ' + ((s.counts && s.counts.negative) || 0));
+    if (state.keywords && state.keywords.length) {
+      lines.push('[키워드] ' + state.keywords.slice(0, 8).map(k => k.word + '(' + k.count + ')').join(', '));
+    }
+    if (state.phrases && state.phrases.length) {
+      lines.push('[자주 붙는 말] ' + state.phrases.slice(0, 5).map(p => p.phrase + '(' + p.count + ')').join(', '));
+    }
+    const picks = C.sortComments(state.comments, 'likes').slice(0, 6);
+    if (picks.length) {
+      lines.push('[댓글 표본]');
+      picks.forEach((c, i) => lines.push((i + 1) + '. ' + String(c.text || '').replace(/\s+/g, ' ').slice(0, 90)));
+    }
+    return lines.join('\n');
+  }
+
+  function runFreeSummary() {
+    if (!FREE) { toast('무료 체험 모듈을 불러오지 못했습니다. 새로고침해 주세요.'); return; }
+    if (!state.comments.length) {
+      toast('먼저 댓글을 모아 주세요. 데모로도 바로 볼 수 있습니다.');
+      setView('collect');
+      return;
+    }
+    const btn = $('#freeSummaryBtn');
+    const status = $('#freeStatus');
+    const box = $('#freeResult');
+    const host = $('#freeUpgrade');
+    if (host) host.innerHTML = '';
+    if (btn) { btn.disabled = true; btn.textContent = '무료 AI가 읽는 중…'; }
+    if (status) status.textContent = '무료 체험으로 요청 중… (보통 3~10초)';
+    const prompt = freeDigest() + '\n\n[요청] 위 댓글을 읽고 한국어로 ① 핵심 반응 3줄 ② 다음 영상으로 만들 소재 2개(근거 댓글 수 포함) ③ 고정 댓글에 넣을 한 줄. 각 항목은 짧게, 없는 근거는 만들지 말 것.';
+    FREE.generate({
+      prompt,
+      system: '유튜브 댓글을 분석하는 한국어 기획자다. 숫자와 근거를 먼저 쓰고, 과장 없이 짧게 쓴다.',
+      options: { temperature: 0.6, maxTokens: 900 }
+    }).then(res => {
+      if (btn) { btn.disabled = false; btn.textContent = '무료로 총평 받기'; }
+      if (!res.ok) {
+        if (host) {
+          FREE.mountUpgrade(host, res, {
+            onConnectKey: function () {
+              const boxEl = $('#geminiBox');
+              if (boxEl) boxEl.open = true;
+              const key = $('#geminiKey');
+              if (key) key.focus();
+              toast('아래 무료 Gemini 키 칸에 키를 넣으면 이 화면에서 바로 받습니다.');
+            },
+            onBridge: function () { setView('studio'); }
+          });
+        }
+        if (status) status.textContent = res.message;
+        toast(res.message);
+        return;
+      }
+      if (box) box.hidden = false;
+      const out = $('#freeResultText');
+      if (out) out.textContent = res.text || '';
+      const meta = $('#freeResultMeta');
+      if (meta) {
+        const left = (res.remaining === undefined || res.remaining === null) ? '' : ' · 남은 맛보기 ' + res.remaining + (res.limit ? '/' + res.limit : '') + '회';
+        meta.textContent = '무료 체험 결과입니다. 게시 전에 숫자와 사실을 한 번 확인하세요.' + left + (res.model ? ' · ' + res.model : '');
+      }
+      if (status) status.textContent = '도착했습니다.';
+    });
   }
 
   function briefOf() {
@@ -958,6 +1075,7 @@
     renderKpi();
     renderTypes();
     renderKeywords();
+    renderClusters();
     renderFilters();
     renderFeed();
     renderInsights();
@@ -1409,6 +1527,22 @@
     const kw = ev.target.closest('[data-kw]');
     if (kw) { setKeyword(kw.dataset.kw); return; }
 
+    const cluster = ev.target.closest('[data-cluster]');
+    if (cluster) { setKeyword(cluster.dataset.cluster); return; }
+
+    const phrase = ev.target.closest('[data-phrase]');
+    if (phrase) {
+      const input = $('#feedSearch');
+      if (input) input.value = phrase.dataset.phrase;
+      state.query = phrase.dataset.phrase;
+      state.limit = PAGE;
+      const clear = $('.search-clear');
+      if (clear) clear.hidden = false;
+      renderFeed();
+      toast('"' + phrase.dataset.phrase + '"가 든 댓글만 보고 있습니다.');
+      return;
+    }
+
     const demo = ev.target.closest('[data-demo]');
     if (demo) { collectDemo(demo.dataset.demo); return; }
 
@@ -1468,6 +1602,12 @@
       case 'copy-pinned': copyPinned(); break;
       case 'copy-prompt': copyPrompt(); break;
       case 'studio-copy-prompt': studioCopyPrompt(); break;
+      case 'free-summary': runFreeSummary(); break;
+      case 'free-copy': {
+        const text = $('#freeResultText') ? $('#freeResultText').textContent : '';
+        if (text) { copyText(text); }
+        break;
+      }
       case 'set-bridge-mode': setBridgeMode(actionEl.dataset.mode); break;
       case 'bridge-open': ev.preventDefault(); bridgeOpen(actionEl.dataset.provider); break;
       case 'save-gemini': saveGeminiSettings(true); break;
@@ -1502,6 +1642,11 @@
   }
 
   function init() {
+    if (FREE) {
+      FREE.configure({ app: 'youtube-comment-analyzer' });
+      const fb = $('#freeBadge');
+      if (fb) FREE.mountBadge(fb);
+    }
     initTheme();
     state.apiKey = getKey();
     loadSettings();

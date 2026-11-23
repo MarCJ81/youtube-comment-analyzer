@@ -103,6 +103,15 @@
         <div id="keywordChips" class="kw-chips"></div>
         <p class="panel-note">칩을 누르면 그 키워드가 들어간 댓글만 남습니다.</p>
       </div>
+
+      <div class="panel topic-panel">
+        <div class="panel-head">
+          <h2>주제 묶음 <em class="count-badge" id="clusterBadge">TOP 4</em></h2>
+        </div>
+        <div id="clusterList" class="cluster-list"></div>
+        <div id="phraseChips" class="phrase-chips" aria-label="자주 붙여 쓰는 말"></div>
+        <p class="panel-note">같은 댓글에서 함께 나오는 단어를 묶었습니다. 구(句) 칩은 그 말이 든 댓글만 남깁니다.</p>
+      </div>
     </div>
 
     <section class="feed" aria-labelledby="feedTitle">
@@ -268,6 +277,27 @@
         <div class="bridge-btns" id="bridgeBtns"></div>
         <p class="bridge-note" id="bridgeNote"></p>
 
+        <div class="free-ai-box" id="freeAiBox">
+          <div class="free-ai-head">
+            <b>무료 AI 맛보기</b>
+            <span id="freeBadge"></span>
+          </div>
+          <p class="form-note">키 없이 지금 바로 댓글 총평을 받아 봅니다. 하루 몇 회 무료이고, 다 쓰면 내 무료 Gemini 키나 구독 AI로 이어집니다.</p>
+          <div class="prompt-actions">
+            <button class="btn btn-primary btn-sm" data-action="free-summary" id="freeSummaryBtn">무료로 총평 받기</button>
+            <span class="muted" id="freeStatus"></span>
+          </div>
+          <div id="freeResult" class="free-result" hidden>
+            <div class="free-result-head">
+              <b>무료 총평</b>
+              <button class="btn btn-ghost btn-sm" type="button" data-action="free-copy">복사</button>
+            </div>
+            <pre id="freeResultText"></pre>
+            <p class="form-note" id="freeResultMeta"></p>
+          </div>
+          <div id="freeUpgrade" class="free-upgrade-slot"></div>
+        </div>
+
         <details class="gemini-box" id="geminiBox">
           <summary>무료 Gemini API 키로 여기서 바로 받기 (선택)</summary>
           <p class="form-note">키가 없어도 위 세 버튼으로 충분합니다. 키를 넣으면 새 창 없이 이 화면에서 결과를 받습니다. 키는 이 브라우저에만 저장되고, 주소창이 아니라 <b>요청 헤더</b>로 Google에만 전송됩니다.</p>
@@ -432,6 +462,7 @@
 <script src="engines/copy-psych-engine.js"></script>
 <script src="engines/radar-copy.js"></script>
 <script src="engines/ai-bridge.js"></script>
+<script src="engines/free-ai.js"></script>
 <script src="core.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>

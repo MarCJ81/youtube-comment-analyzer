@@ -368,6 +368,121 @@
     return out;
   }
 
+  /* ── 구(句) 추출 — 단어 하나로는 안 잡히는 말 ──────────────
+     "가습기 추천", "배터리 오래"처럼 붙여 쓰는 말은 단어 빈도로는
+     사라진다. 댓글 안에서 이웃한 단어 2~3개를 묶어 세고, 같은
+     댓글에서 두 번 나와도 한 번만 센다. */
+  function extractPhrases(comments, opts) {
+    const o = opts || {};
+    const maxN = Math.max(2, Math.min(3, o.maxN || 3));
+    const minCount = o.minCount === undefined ? 2 : Math.max(1, Number(o.minCount) || 1);
+    const limit = o.limit || 12;
+    const map = new Map();
+    for (const c of comments || []) {
+      const seq = tokenize(c && c.text);
+      if (seq.length < 2) continue;
+      const seen = new Set();
+      for (let n = 2; n <= maxN; n++) {
+        for (let i = 0; i + n <= seq.length; i++) {
+          const words = seq.slice(i, i + n);
+          // 같은 단어가 반복된 구("좋아 좋아")는 버린다.
+          if (new Set(words).size !== words.length) continue;
+          const phrase = words.join(' ');
+          if (seen.has(phrase)) continue;
+          seen.add(phrase);
+          const row = map.get(phrase) || { phrase, words, count: 0, likes: 0, n };
+          row.count += 1;
+          row.likes += Number(c.likeCount) || 0;
+          map.set(phrase, row);
+        }
+      }
+    }
+    const rows = Array.from(map.values()).filter(r => r.count >= minCount);
+    // 긴 구가 실제로 더 많은 정보를 담는다. 같은 횟수면 긴 쪽, 그다음 좋아요.
+    rows.sort((a, b) => (b.count - a.count) || (b.n - a.n) || (b.likes - a.likes) || a.phrase.localeCompare(b.phrase, 'ko'));
+    // 부분집합 정리: 더 긴 구가 같은 횟수로 잡히면 짧은 쪽은 버린다.
+    const kept = [];
+    for (const r of rows) {
+      const covered = kept.some(k => k.count === r.count && k.phrase.indexOf(r.phrase) >= 0);
+      if (!covered) kept.push(r);
+      if (kept.length >= limit) break;
+    }
+    return kept;
+  }
+
+  /* ── 주제 묶음 — 같이 등장하는 단어끼리 ────────────────────
+     형태소 분석기 없이도 "같은 댓글에서 함께 나오는가"만으로
+     주제를 묶을 수 있다(경량 co-occurrence 클러스터링).
+     각 묶음은 대표 단어 1개(가장 많이 나온 단어)를 이름으로 쓴다. */
+  function clusterTopics(comments, keywords, opts) {
+    const o = opts || {};
+    const list = (comments || []).map(c => ({ c, tokens: new Set(tokenize(c && c.text)) }));
+    const kws = (keywords && keywords.length ? keywords : topKeywords(comments, 12)).slice(0, o.maxKeywords || 12);
+    if (kws.length < 2) return [];
+    const ids = new Map(kws.map((k, i) => [k.word, i]));
+    const n = kws.length;
+    const co = Array.from({ length: n }, () => new Array(n).fill(0));
+    const totals = new Array(n).fill(0);
+    for (const row of list) {
+      const hit = [];
+      for (const w of row.tokens) {
+        const i = ids.get(w);
+        if (i === undefined) continue;
+        hit.push(i);
+      }
+      for (const i of hit) totals[i] += 1;
+      for (let a = 0; a < hit.length; a++) {
+        for (let b = a + 1; b < hit.length; b++) {
+          co[hit[a]][hit[b]] += 1;
+          co[hit[b]][hit[a]] += 1;
+        }
+      }
+    }
+    const jaccard = (i, j) => {
+      const union = totals[i] + totals[j] - co[i][j];
+      return union > 0 ? co[i][j] / union : 0;
+    };
+    const assigned = new Array(n).fill(-1);
+    const clusters = [];
+    for (let i = 0; i < n; i++) {
+      if (assigned[i] >= 0) continue;
+      const members = [i];
+      assigned[i] = clusters.length;
+      for (let j = i + 1; j < n; j++) {
+        if (assigned[j] >= 0) continue;
+        const sim = Math.max.apply(null, members.map(m => jaccard(m, j)));
+        if (sim >= (o.threshold === undefined ? 0.28 : o.threshold)) {
+          members.push(j);
+          assigned[j] = clusters.length;
+        }
+      }
+      const words = members.map(m => kws[m]);
+      const label = words.slice().sort((a, b) => (b.count - a.count) || a.word.localeCompare(b.word, 'ko'))[0];
+      const memberSet = new Set(members);
+      const matched = list.filter(row => {
+        for (const w of row.tokens) {
+          const idx = ids.get(w);
+          if (idx !== undefined && memberSet.has(idx)) return true;
+        }
+        return false;
+      }).map(row => row.c);
+      const types = { purchase: 0, question: 0, positive: 0, negative: 0 };
+      for (const c of matched) {
+        const t = c && c.type ? c.type : classifyComment(String((c && c.text) || ''));
+        if (types[t] !== undefined) types[t] += 1;
+      }
+      clusters.push({
+        label: label.word,
+        words: words.map(w => w.word),
+        count: matched.length,
+        likes: matched.reduce((a, c) => a + (Number(c && c.likeCount) || 0), 0),
+        types,
+        share: list.length ? Math.round((matched.length / list.length) * 100) : 0,
+      });
+    }
+    return clusters.sort((a, b) => b.count - a.count).slice(0, o.limit || 5);
+  }
+
   function topKeywords(comments, limit) {
     const max = limit || 15;
     const map = new Map();
@@ -1278,6 +1393,7 @@
     formatCount, formatPercent, formatRelative, trim1, relativeTime,
     parseVideoId, isShortsUrl,
     classifyComment, classifyScores, classifyAll, tokenize, topKeywords, keywordFilter,
+    extractPhrases, clusterTopics,
     computeStats, ratio,
     buildFaq, buildPinnedComment, buildContentIdeas, buildPrompt,
     BRIDGE_MODES, bridgeModeInfo, buildBridgeBundle, buildBridgePrompt, splitCandidates,

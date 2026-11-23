@@ -962,3 +962,42 @@ main { flex: 1 1 auto; width: 100%; max-width: var(--maxw); margin: 0 auto; padd
   .topbar { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); }
   .modal-backdrop { backdrop-filter: none; }
 }
+
+/* ══ 주제 묶음 · 구(句) 칩 (경량 클러스터링) ═══════════════ */
+.cluster-list { display: grid; gap: 8px; }
+.cluster-card {
+  border: 1px solid var(--line, rgba(0,0,0,.1)); border-radius: 10px;
+  padding: 9px 11px; display: grid; gap: 6px; background: var(--surface, transparent);
+}
+.cluster-top { display: flex; align-items: baseline; gap: 8px; }
+.cluster-top b { font-size: 13.5px; }
+.cluster-top .share { margin-left: auto; font-size: 11.5px; opacity: .65; font-variant-numeric: tabular-nums; }
+.cluster-words { display: flex; flex-wrap: wrap; gap: 4px; }
+.cluster-words span {
+  font-size: 11.5px; padding: 2px 7px; border-radius: 999px;
+  background: var(--wash, rgba(0,0,0,.05)); border: 1px solid var(--line, rgba(0,0,0,.08));
+}
+.cluster-mix { display: flex; height: 4px; border-radius: 999px; overflow: hidden; background: var(--line, rgba(0,0,0,.08)); }
+.cluster-mix i { display: block; height: 100%; }
+.cluster-mix i[data-t="purchase"] { background: #2563eb; }
+.cluster-mix i[data-t="question"] { background: #d97706; }
+.cluster-mix i[data-t="positive"] { background: #16a34a; }
+.cluster-mix i[data-t="negative"] { background: #dc2626; }
+.cluster-legend { display: flex; gap: 8px; font-size: 10.5px; opacity: .6; flex-wrap: wrap; }
+.phrase-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+.phrase-chips:empty { display: none; }
+.phrase-chips button {
+  font: inherit; font-size: 11.5px; padding: 3px 9px; border-radius: 999px; cursor: pointer;
+  border: 1px dashed var(--line, rgba(0,0,0,.2)); background: transparent; color: inherit;
+}
+.phrase-chips button:hover { border-style: solid; }
+.phrase-chips .n { margin-left: 5px; opacity: .6; font-variant-numeric: tabular-nums; }
+
+/* ══ 무료 AI 맛보기 ═══════════════════════════════════ */
+.free-ai-box {
+  margin-top: 14px; padding: 11px 13px; border-radius: 10px;
+  border: 1px solid var(--line, rgba(0,0,0,.12)); background: var(--wash, rgba(0,0,0,.02));
+}
+.free-ai-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 13px; }
+.free-ai-head span { margin-left: auto; }
+.free-upgrade-slot:empty { display: none; }
