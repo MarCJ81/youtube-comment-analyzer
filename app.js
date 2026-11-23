@@ -764,11 +764,13 @@
     if (host) host.innerHTML = '';
     if (btn) { btn.disabled = true; btn.textContent = '무료 AI가 읽는 중…'; }
     if (status) status.textContent = '무료 체험으로 요청 중… (보통 3~10초)';
-    const prompt = freeDigest() + '\n\n[요청] 위 댓글을 읽고 한국어로 ① 핵심 반응 3줄 ② 다음 영상으로 만들 소재 2개(근거 댓글 수 포함) ③ 고정 댓글에 넣을 한 줄. 각 항목은 짧게, 없는 근거는 만들지 말 것.';
+    // 워커는 짧은 입력에서 안정적이다. 키워드와 댓글 수만 보내 짧은 총평을 받는다.
+    const kws = (state.analysis && state.analysis.phrases ? state.analysis.phrases : []).slice(0, 5).map(p => p.text || p).join(', ');
+    const prompt = '한국어 유튜브 댓글 총평 맛보기. 댓글 ' + state.comments.length + '개, 키워드: ' + String(kws).slice(0, 60) +
+      '. ① 핵심 반응 2줄 ② 다음 영상 소재 2개. 각 한 줄, 30자 이내.';
     FREE.generate({
       prompt,
-      system: '유튜브 댓글을 분석하는 한국어 기획자다. 숫자와 근거를 먼저 쓰고, 과장 없이 짧게 쓴다.',
-      options: { temperature: 0.6, maxTokens: 900 }
+      options: { temperature: 0.6, maxTokens: 600 }
     }).then(res => {
       if (btn) { btn.disabled = false; btn.textContent = '무료로 총평 받기'; }
       if (!res.ok) {
