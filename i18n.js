@@ -2929,7 +2929,10 @@ window.__ONETAP_I18N_DICT__ = {
 "5. 보관과 삭제": "5. Retention and deletion",
 "API 키는 앱 안의 '키 삭제'로 언제든 지울 수 있습니다. 수집한 댓글과 마지막 분석 기록은 브라우저 사이트 데이터를 삭제하면 함께 사라집니다.": "The API key can be removed at any time with Delete key in the app. Collected comments and the last analysis disappear when you clear the site data in your browser.",
 "6. 제3자 제공": "6. Third-party sharing",
-"제3자에게 제공하는 데이터가 없습니다. 운영자는 이용자의 데이터를 받지 않으므로 별도 제공·위탁이 없습니다.": "No data is shared with third parties. The operator receives none of your data, so there is nothing to share or process on your behalf."
+"제3자에게 제공하는 데이터가 없습니다. 운영자는 이용자의 데이터를 받지 않으므로 별도 제공·위탁이 없습니다.": "No data is shared with third parties. The operator receives none of your data, so there is nothing to share or process on your behalf.",
+"4대 유형 자동 분류": "Auto-sorted into 4 types",
+"질문·구매의향 댓글에서 추출": "Pulled from question and buying-intent comments",
+"불만 · 질문 · 구매의향에서": "From complaints, questions and buying intent"
 };
 window.__ONETAP_I18N_RULES__ = [["^(\\d{4})\\. (\\d{1,2})\\. (\\d{1,2})\\. 오후 (\\d{1,2}):(\\d{2}):(\\d{2})$", "$1-$2-$3 $4:$5:$6 PM"], ["^(\\d{4})\\. (\\d{1,2})\\. (\\d{1,2})\\. 오전 (\\d{1,2}):(\\d{2}):(\\d{2})$", "$1-$2-$3 $4:$5:$6 AM"], ["유튜브", "YouTube"], ["틱톡", "TikTok"], ["인스타그램", "Instagram"], ["인스타", "Instagram"], ["(\\d+)\\s*시간 전", "$1h ago"], ["(\\d+)\\s*일 전", "$1d ago"], ["(\\d+)\\s*분 전", "$1m ago"], ["(\\d+)\\s*초 전", "$1s ago"], ["(\\d+)\\s*초", "$1s"], ["(\\d+)\\s*개", "$1"], ["(\\d+)\\s*건", "$1 items"], ["(\\d+)\\s*회", "$1 calls"], ["(\\d+)\\s*명", "$1 people"], ["(\\d+)\\s*점", "$1 pts"], ["(\\d+)\\s*자", "$1 chars"], ["조회수", "views"], ["구독자", "subscribers"], ["좋아요", "likes"], ["댓글", "comments"]];
 /* OneTap i18n engine — Korean / English (auto-detect + manual switch)
